@@ -1,6 +1,6 @@
-# 🔐 IVM – ID-Networkers Vulnerability Map
+# IVM – ID-Networkers Vulnerability Map
 
-> **⚠️ FOR SECURITY TRAINING / PENETRATION TESTING ONLY**
+> **FOR SECURITY TRAINING / PENETRATION TESTING ONLY**
 > Fokus: Memahami **apa yang salah (vulnerable)** dan **apa yang seharusnya benar (mitigasi)**.
 
 ---
