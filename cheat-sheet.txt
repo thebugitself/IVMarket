@@ -297,30 +297,3 @@ TOOLS YANG DIREKOMENDASIKAN:
 
   5. Cek Redis:
      redis-cli -h localhost -p 6379 KEYS *
-
-════════════════════════════════════════════════════════════════
-  TIPS UNTUK PESERTA
-════════════════════════════════════════════════════════════════
-
-  ★ Jangan hanya fokus pada "berhasil exploit"
-    → Pahami MENGAPA vulnerability itu ada
-    → Pikirkan APA dampak di dunia nyata
-    → Ketahui BAGAIMANA cara memperbaikinya
-
-  ★ Gunakan Burp Suite untuk intercept dan modify request
-  ★ Perhatikan response headers dan error messages
-  ★ Cek source code frontend di browser DevTools
-  ★ Baca dokumentasi OWASP Top 10 untuk pemahaman mendalam
-  ★ Catat setiap temuan dalam format laporan pentest
-
-  Format Laporan:
-  ┌──────────────────────────────────────────┐
-  │ Vulnerability: [Nama]                    │
-  │ OWASP Category: [A01-A10]                │
-  │ Endpoint: [URL]                          │
-  │ Severity: [Critical/High/Medium/Low]     │
-  │ Deskripsi: [Apa yang salah]              │
-  │ Steps to Reproduce: [Langkah exploit]    │
-  │ Impact: [Dampak jika dieksploitasi]      │
-  │ Recommendation: [Cara mitigasi]          │
-  └──────────────────────────────────────────┘
