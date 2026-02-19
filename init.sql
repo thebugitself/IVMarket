@@ -77,6 +77,16 @@ CREATE TABLE logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- Discount Code Usages (race condition vulnerable — no unique constraint, check-then-insert gap)
+CREATE TABLE discount_usages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    discount_code VARCHAR(50),
+    product_id INT,
+    discount_percent DECIMAL(5,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Messages (for future expansion)
 CREATE TABLE messages (
     id INT AUTO_INCREMENT PRIMARY KEY,

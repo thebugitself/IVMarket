@@ -24,8 +24,8 @@ export default function Wallet() {
   const handleDeposit = async () => {
     setMsg(''); setError('');
     const num = parseFloat(amount);
-    if (!Number.isFinite(num) || num === 0) {
-      return setError('Please enter a valid amount');
+    if (!Number.isFinite(num) || num <= 0) {
+      return setError('Please enter a valid positive amount');
     }
     try {
       const { data } = await axios.post('/api/wallet/deposit',
@@ -43,8 +43,11 @@ export default function Wallet() {
   const handleWithdraw = async () => {
     setMsg(''); setError('');
     const num = parseFloat(amount);
-    if (!Number.isFinite(num) || num === 0) {
-      return setError('Please enter a valid amount');
+    if (!Number.isFinite(num) || num <= 0) {
+      return setError('Please enter a valid positive amount');
+    }
+    if (wallet && num > parseFloat(wallet.balance)) {
+      return setError('Insufficient balance');
     }
     try {
       const { data } = await axios.post('/api/wallet/withdraw',

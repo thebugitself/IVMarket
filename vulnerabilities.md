@@ -271,14 +271,14 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 12. Race Condition — `OWASP A04:2021`
+### 12. Race Condition (Wallet Withdraw) — `OWASP A04:2021`
 
 | Property | Value |
 |----------|-------|
 | **Endpoint** | `POST /api/wallet/withdraw` |
 | **Root Cause** | Read-then-update without transaction or row lock; 100ms artificial delay |
-| **Exploit** | Send 20+ parallel withdraw requests; balance goes negative |
-| **Impact** | Infinite money glitch — withdraw more than available balance |
+| **Exploit** | Send 20+ parallel withdraw requests |
+| **Impact** | Withdraw more than available balance (balance protection in place but race still exists) |
 
 **Apa yang salah:**
 - Balance dicek (SELECT), lalu diupdate (UPDATE) tanpa database lock
@@ -288,6 +288,41 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 - Gunakan database transaction dengan `SELECT ... FOR UPDATE` (row locking)
 - Gunakan atomic operation: `UPDATE wallets SET balance = balance - ? WHERE balance >= ?`
 - Implement mutex/semaphore di application layer
+
+---
+
+### 12b. Race Condition (Discount Code Stacking) — `OWASP A04:2021`
+
+| Property | Value |
+|----------|-------|
+| **Endpoint** | `POST /api/discount/apply` |
+| **Root Cause** | Check-then-insert without transaction; 500ms artificial delay between SELECT and INSERT |
+| **Discount Code** | `IDN20` — 20% off (shown on Admin Dashboard) |
+| **Exploit** | Send 5+ parallel requests to apply same discount code; all pass the "already used" check |
+| **Impact** | Stack multiple 20% discounts (e.g., 5x = 100% off = free purchase) |
+
+**Apa yang salah:**
+- Server mengecek apakah kode diskon sudah dipakai (SELECT), lalu ada delay 500ms sebelum INSERT
+- Dalam window 500ms itu, semua request paralel lolos pengecekan karena INSERT belum terjadi
+- Setiap request yang berhasil menambah 20% diskon, bisa di-stack sampai 100%
+
+**Exploit:**
+```bash
+# Kirim 5 request paralel — hasilnya 5x 20% = 100% discount
+for i in $(seq 1 5); do
+  curl -X POST http://localhost:3001/api/discount/apply \
+    -H "Authorization: Bearer <token>" \
+    -H "Content-Type: application/json" \
+    -d '{"code":"IDN20","product_id":1}' &
+done
+wait
+```
+
+**Cara mitigasi:**
+- Gunakan database transaction dengan `SELECT ... FOR UPDATE`
+- Gunakan UNIQUE constraint pada `(user_id, discount_code, product_id)`
+- Implement atomic check-and-insert: `INSERT ... WHERE NOT EXISTS (...)`
+- Hilangkan delay, atau gunakan distributed lock (Redis)
 
 ---
 

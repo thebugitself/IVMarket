@@ -305,15 +305,119 @@ app.get('/api/reviews/:productId', async (req, res) => {
   }
 });
 
+// ── Discount Code ──────────────────────────────────────────
+// VULN: Race condition — check-then-insert without transaction lock.
+//       Multiple parallel requests can all pass the "already used" check
+//       before any INSERT happens, allowing the discount to stack.
+
+// Check existing discount usages for a user + product
+app.get('/api/discount/check/:productId', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const productId = req.params.productId;
+    const [usages] = await db.query(
+      `SELECT * FROM discount_usages WHERE user_id = ${userId} AND product_id = ${productId}`
+    );
+    if (usages.length > 0) {
+      const totalPercent = usages.reduce((sum, u) => sum + parseFloat(u.discount_percent), 0);
+      return res.json({
+        applied: true,
+        code: usages[0].discount_code,
+        discount_percent: Math.min(totalPercent, 100),
+        times_applied: usages.length,
+      });
+    }
+    res.json({ applied: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/discount/apply', verifyToken, async (req, res) => {
+  try {
+    const { code, product_id } = req.body;
+    const userId = req.user.id;
+
+    // Only "IDN20" is valid — 20% off
+    const validCodes = { 'IDN20': 20 };
+    if (!validCodes[code]) {
+      return res.status(400).json({ error: 'Invalid discount code' });
+    }
+
+    const discountPercent = validCodes[code];
+
+    // Step 1: Check if user already used this code for this product (SELECT)
+    const [existing] = await db.query(
+      `SELECT * FROM discount_usages WHERE user_id = ${userId} AND discount_code = '${code}' AND product_id = ${product_id}`
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Discount code already applied to this product' });
+    }
+
+    // VULNERABLE: Artificial delay between CHECK and INSERT
+    // This window allows race condition exploitation
+    await new Promise(r => setTimeout(r, 500));
+
+    // Step 2: Record usage (too late if multiple requests passed Step 1)
+    await db.query(
+      `INSERT INTO discount_usages (user_id, discount_code, product_id, discount_percent) VALUES (${userId}, '${code}', ${product_id}, ${discountPercent})`
+    );
+
+    // Count how many times discount was applied (for stacking detection)
+    const [usages] = await db.query(
+      `SELECT COUNT(*) as count FROM discount_usages WHERE user_id = ${userId} AND discount_code = '${code}' AND product_id = ${product_id}`
+    );
+
+    await db.query(
+      `INSERT INTO logs (action, details, ip_address) VALUES ('discount_applied', 'User ${userId} applied ${code} (${discountPercent}%) on product ${product_id} – total applied: ${usages[0].count}x', '${req.ip}')`
+    );
+
+    res.json({
+      success: true,
+      code,
+      discount_percent: discountPercent,
+      times_applied: usages[0].count,
+      message: `Discount ${code} applied! ${discountPercent}% off`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reset discount usages (for re-testing)
+app.delete('/api/discount/reset', verifyToken, async (req, res) => {
+  try {
+    const { product_id } = req.body;
+    await db.query(`DELETE FROM discount_usages WHERE user_id = ${req.user.id} AND product_id = ${product_id}`);
+    res.json({ success: true, message: 'Discount usage reset' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/order', verifyToken, async (req, res) => {
   try {
-    const { product_id, quantity, total_price, shipping_address } = req.body;
+    const { product_id, quantity, total_price, shipping_address, discount_code } = req.body;
+
+    // Check wallet balance before placing order
+    const [wallet] = await db.query(`SELECT balance FROM wallets WHERE user_id = ${req.user.id}`);
+    if (!wallet.length) return res.status(400).json({ error: 'Wallet not found' });
+    const balance = parseFloat(wallet[0].balance);
+    if (balance < parseFloat(total_price)) {
+      return res.status(400).json({ error: 'Insufficient wallet balance', balance });
+    }
 
     const q = `INSERT INTO orders (user_id, product_id, quantity, total_price, status, shipping_address)
                VALUES (${req.user.id}, ${product_id}, ${quantity}, ${total_price}, 'pending', '${shipping_address}')`;
     const [result] = await db.query(q);
 
-    await db.query(`UPDATE wallets SET balance = balance - ${total_price} WHERE user_id = ${req.user.id}`);
+    await db.query(`UPDATE wallets SET balance = GREATEST(balance - ${total_price}, 0) WHERE user_id = ${req.user.id}`);
+
+    // Clean up discount usages for this product after order
+    if (discount_code) {
+      await db.query(`INSERT INTO logs (action, details, ip_address) VALUES ('discount_used', 'Order #${result.insertId} used discount ${discount_code}', '${req.ip}')`);
+    }
 
     await db.query(`INSERT INTO logs (action, details, ip_address) VALUES ('order_created', 'Order #${result.insertId} by user ${req.user.id} – $${total_price}', '${req.ip}')`);
 
@@ -349,7 +453,7 @@ app.get('/api/wallet/:userId', async (req, res) => {
 app.post('/api/wallet/deposit', verifyToken, async (req, res) => {
   try {
     const amount = parseFloat(req.body.amount);
-    if (!Number.isFinite(amount)) return res.status(400).json({ error: 'Invalid amount' });
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount. Must be a positive number.' });
     await db.query(`UPDATE wallets SET balance = COALESCE(balance, 0) + ${amount} WHERE user_id = ${req.user.id}`);
     const [w] = await db.query(`SELECT * FROM wallets WHERE user_id = ${req.user.id}`);
     res.json({ success: true, balance: parseFloat(w[0].balance) });
@@ -360,7 +464,8 @@ app.post('/api/wallet/deposit', verifyToken, async (req, res) => {
 
 app.post('/api/wallet/withdraw', verifyToken, async (req, res) => {
   try {
-    const { amount } = req.body;
+    const amount = parseFloat(req.body.amount);
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount. Must be a positive number.' });
     const userId = req.user.id;
 
     const [rows] = await db.query(`SELECT balance FROM wallets WHERE user_id = ${userId}`);
