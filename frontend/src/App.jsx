@@ -16,6 +16,7 @@ import AdminUsers from './components/AdminUsers';
 import AdminLogs from './components/AdminLogs';
 import AdminPing from './components/AdminPing';
 import AdminExport from './components/AdminExport';
+import Feedback from './components/Feedback';
 import RequireAuth from './components/RequireAuth';
 
 function AppLayout() {
@@ -41,6 +42,7 @@ function AppLayout() {
             <Route path="/checkout/:id" element={<RequireAuth><Checkout /></RequireAuth>} />
             <Route path="/wallet" element={<RequireAuth><Wallet /></RequireAuth>} />
             <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin" element={<RequireAuth><AdminDashboard /></RequireAuth>} />
             <Route path="/admin/users" element={<RequireAuth><AdminUsers /></RequireAuth>} />
             <Route path="/admin/logs" element={<RequireAuth><AdminLogs /></RequireAuth>} />

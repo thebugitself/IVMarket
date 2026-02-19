@@ -30,6 +30,7 @@ export default function Navbar() {
 
       <ul className="navbar-links">
         <li><Link to="/">Marketplace</Link></li>
+        <li><Link to="/feedback">Feedback</Link></li>
 
         {user ? (
           <>
@@ -38,7 +39,7 @@ export default function Navbar() {
             <li><Link to="/orders">Orders</Link></li>
             <li><Link to={`/profile/${user.id}`}>Profile</Link></li>
 
-            {/* VULN: Admin check is client-side only */}
+            { }
             {user.role === 'admin' && (
               <li><Link to="/admin" className="nav-admin">⚡ Admin</Link></li>
             )}
