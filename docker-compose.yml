@@ -1,0 +1,60 @@
+# ============================================================
+# IVM - ID-NETWORKERS VULNERABLE MARKETPLACE
+# Docker Compose - FOR SECURITY TRAINING ONLY
+# ============================================================
+
+services:
+  # ---- MySQL Database ----
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: marketplace
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # ---- Redis (Insecure Session Store) ----
+  redis:
+    image: redis:7-alpine
+    # VULN: No password, no ACL - anyone on the network can connect
+    ports:
+      - "6379:6379"
+
+  # ---- Node.js Backend API ----
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: marketplace
+      JWT_SECRET: secret123
+      REDIS_HOST: redis
+      NODE_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  # ---- React Frontend (Nginx) ----
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

