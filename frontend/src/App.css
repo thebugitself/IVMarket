@@ -1,8 +1,3 @@
-/* ============================================================
-   IVM - ID-Networkers Vulnerable Marketplace
-   ============================================================ */
-
-/* ── Reset & Variables ─────────────────────────────────────── */
 :root {
   --bg-primary:    #f5f5f5;
   --bg-secondary:  #ffffff;
@@ -25,6 +20,148 @@
   --shadow-hover:  0 8px 32px rgba(220, 29, 23, .12);
 }
 
+[data-theme='dark'] {
+  --bg-primary:    #0f0f1a;
+  --bg-secondary:  #1a1a2e;
+  --bg-card:       #1a1a2e;
+  --bg-input:      #16162a;
+  --border:        #2a2a45;
+  --text-primary:  #e4e4e7;
+  --text-secondary:#9393a8;
+  --accent:        #ef4444;
+  --accent-dark:   #dc2626;
+  --accent-light:  rgba(239, 68, 68, 0.12);
+  --accent2:       #ef4444;
+  --gradient:      linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --danger:        #ef4444;
+  --success:       #22c55e;
+  --warning:       #f59e0b;
+  --shadow:        0 4px 24px rgba(0, 0, 0, .3);
+  --shadow-hover:  0 8px 32px rgba(239, 68, 68, .2);
+}
+
+[data-theme='dark'] body {
+  background: #0f0f1a;
+  color: #e4e4e7;
+}
+
+[data-theme='dark'] .navbar {
+  background: #1a1a2e;
+  border-bottom-color: #ef4444;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .logo-section {
+  background: #1a1a2e;
+}
+
+[data-theme='dark'] .form-section {
+  background: #b91510;
+}
+
+[data-theme='dark'] .form-section .login-card {
+  background: #1a1a2e;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .form-section .login-card h2 {
+  color: #ef4444;
+}
+
+[data-theme='dark'] .form-section .login-card .form-group label {
+  color: #9393a8;
+}
+
+[data-theme='dark'] .form-section .login-card .form-group input {
+  background: #16162a;
+  border-color: #2a2a45;
+  color: #e4e4e7;
+}
+
+[data-theme='dark'] .form-section .login-card .form-group input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+[data-theme='dark'] .form-section .login-card .form-check label {
+  color: #9393a8;
+}
+
+[data-theme='dark'] .form-section .login-card .btn-primary {
+  background: #ef4444;
+}
+
+[data-theme='dark'] .form-section .login-card .btn-primary:hover {
+  background: #dc2626;
+}
+
+[data-theme='dark'] .form-section .login-card .alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+[data-theme='dark'] .form-section .login-card .alert-success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+[data-theme='dark'] .form-section .login-card .text-center a {
+  color: #ef4444;
+}
+
+[data-theme='dark'] .form-section .login-card .text-muted {
+  color: #9393a8;
+}
+
+[data-theme='dark'] .alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+[data-theme='dark'] .alert-success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+[data-theme='dark'] .alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+[data-theme='dark'] .terminal-output {
+  background: #0a0a14;
+  border-color: #2a2a45;
+  color: #d4d4d4;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.25s ease;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: rotate(20deg);
+}
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -38,7 +175,6 @@ body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; color: var(--accent-dark); }
 
-/* ── Login / Register Split Screen ─────────────────────────── */
 .login-wrapper {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -201,7 +337,6 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Navbar ────────────────────────────────────────────────── */
 .navbar {
   background: #ffffff;
   border-bottom: 2px solid #dc1d17;
@@ -308,14 +443,12 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   color: #fff;
 }
 
-/* ── Main Content ──────────────────────────────────────────── */
 .main-content {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
 }
 
-/* ── Page Headings ─────────────────────────────────────────── */
 .page-header {
   margin-bottom: 2rem;
 }
@@ -331,7 +464,6 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   margin-top: 0.25rem;
 }
 
-/* ── Cards ─────────────────────────────────────────────────── */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -389,14 +521,12 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   margin-top: 0.4rem;
 }
 
-/* ── Product Grid ──────────────────────────────────────────── */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1.5rem;
 }
 
-/* ── Forms (general) ───────────────────────────────────────── */
 .form-container {
   max-width: 480px;
   margin: 2rem auto;
@@ -471,7 +601,6 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   font-size: 0.85rem;
 }
 
-/* ── Buttons ───────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -536,7 +665,6 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   font-size: 0.8rem;
 }
 
-/* ── Alerts ────────────────────────────────────────────────── */
 .alert {
   padding: 0.8rem 1rem;
   border-radius: var(--radius-sm);
@@ -562,7 +690,6 @@ a:hover { text-decoration: underline; color: var(--accent-dark); }
   color: var(--warning);
 }
 
-/* ── Tables ────────────────────────────────────────────────── */
 .table-container {
   overflow-x: auto;
 }
@@ -595,7 +722,6 @@ td { font-size: 0.9rem; }
 
 tr:hover td { background: var(--accent-light); }
 
-/* ── Product Detail ────────────────────────────────────────── */
 .product-detail {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -650,7 +776,6 @@ tr:hover td { background: var(--accent-light); }
   line-height: 1.7;
 }
 
-/* ── Reviews ───────────────────────────────────────────────── */
 .reviews-section {
   margin-top: 2rem;
 }
@@ -699,7 +824,6 @@ tr:hover td { background: var(--accent-light); }
   line-height: 1.6;
 }
 
-/* ── Profile ───────────────────────────────────────────────── */
 .profile-container {
   max-width: 720px;
   margin: 0 auto;
@@ -748,7 +872,6 @@ tr:hover td { background: var(--accent-light); }
   color: var(--success);
 }
 
-/* ── Admin Dashboard ───────────────────────────────────────── */
 .admin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -788,7 +911,6 @@ tr:hover td { background: var(--accent-light); }
   font-size: 0.85rem;
 }
 
-/* ── Terminal / Code Output ────────────────────────────────── */
 .terminal-output {
   background: #1e1e1e;
   color: #d4d4d4;
@@ -803,7 +925,6 @@ tr:hover td { background: var(--accent-light); }
   border: 1px solid #444;
 }
 
-/* ── Wallet ────────────────────────────────────────────────── */
 .wallet-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -836,7 +957,6 @@ tr:hover td { background: var(--accent-light); }
   width: 160px;
 }
 
-/* ── Search Results ────────────────────────────────────────── */
 .search-info {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -847,7 +967,6 @@ tr:hover td { background: var(--accent-light); }
   box-shadow: var(--shadow);
 }
 
-/* ── Checkout ──────────────────────────────────────────────── */
 .checkout-container {
   max-width: 600px;
   margin: 0 auto;
@@ -881,7 +1000,6 @@ tr:hover td { background: var(--accent-light); }
   color: var(--accent);
 }
 
-/* ── Loading / Empty States ────────────────────────────────── */
 .loading, .empty-state {
   text-align: center;
   padding: 4rem 1rem;
@@ -900,7 +1018,6 @@ tr:hover td { background: var(--accent-light); }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .navbar { padding: 0 1rem; }
   .navbar-search input { width: 140px; }
@@ -919,7 +1036,6 @@ tr:hover td { background: var(--accent-light); }
   }
 }
 
-/* ── Utility ───────────────────────────────────────────────── */
 .mt-1 { margin-top: 0.5rem; }
 .mt-2 { margin-top: 1rem; }
 .mt-3 { margin-top: 1.5rem; }

@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useState } from 'react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
 
@@ -29,6 +31,11 @@ export default function Navbar() {
       </form>
 
       <ul className="navbar-links">
+        <li>
+          <button className="theme-toggle" onClick={toggleTheme} title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}>
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+        </li>
         <li><Link to="/">Marketplace</Link></li>
         <li><Link to="/feedback">Feedback</Link></li>
 
