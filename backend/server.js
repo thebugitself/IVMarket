@@ -666,7 +666,15 @@ app.post('/api/export-pdf', verifyToken, async (req, res) => {
   try {
     const { url } = req.body;
 
-    const response = await axios.get(url, { timeout: 15000 });
+    const http  = require('http');
+    const https = require('https');
+    const httpAgent  = new http.Agent({ family: 4 });
+    const httpsAgent = new https.Agent({ family: 4 });
+    const response = await axios.get(url, {
+      timeout: 15000,
+      httpAgent,
+      httpsAgent,
+    });
 
     res.json({
       success: true,

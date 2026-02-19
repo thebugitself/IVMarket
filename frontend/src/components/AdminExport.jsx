@@ -2,20 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - SSRF:  The backend fetches whatever URL the user provides.
- *   No allow-list, no internal-IP blocking.
- *   Exploit examples:
- *     http://localhost:3001/api/admin/users      (access internal API)
- *     http://169.254.169.254/latest/meta-data/   (AWS metadata)
- *     http://backend:3001/api/internal/metadata     (Docker internal network)
- *     file:///etc/passwd                           (local file – may work with some HTTP libs)
- */
 export default function AdminExport() {
   const { token } = useAuth();
 
-  const [url, setUrl] = useState('http://localhost:3001/api/health');
+  const [url, setUrl] = useState('http://backend:3001/api/health');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,11 +49,13 @@ export default function AdminExport() {
         </button>
       </form>
 
-      {/* Quick-access URL buttons */}
+      { }
       <div className="flex gap-1 mb-3" style={{ flexWrap: 'wrap' }}>
         {[
-          'http://localhost:3001/api/health',
-          'http://localhost:3001/api/products',
+          'http://backend:3001/api/health',
+          'http://backend:3001/api/products',
+          'http://backend:3001/api/config',
+          'http://backend:3001/api/users/export',
         ].map((p) => (
           <button
             key={p}
