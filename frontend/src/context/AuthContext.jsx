@@ -9,7 +9,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (token) {
       try {
-        // VULN: Token stored in localStorage – readable by any XSS payload
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUser(payload);
       } catch {
@@ -22,8 +21,7 @@ export function AuthProvider({ children }) {
   const login = (newToken, userData) => {
     setToken(newToken);
     setUser(userData);
-    localStorage.setItem('token', newToken); // VULN: XSS can steal this
-    // VULN: Cookie also set client-side – readable via document.cookie
+    localStorage.setItem('token', newToken);
     document.cookie = `session_token=${newToken}; path=/; SameSite=Lax`;
   };
 

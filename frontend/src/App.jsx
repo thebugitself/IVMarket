@@ -16,6 +16,7 @@ import AdminUsers from './components/AdminUsers';
 import AdminLogs from './components/AdminLogs';
 import AdminPing from './components/AdminPing';
 import AdminExport from './components/AdminExport';
+import RequireAuth from './components/RequireAuth';
 
 function AppLayout() {
   const location = useLocation();
@@ -33,18 +34,18 @@ function AppLayout() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Marketplace />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/profile/:id" element={<Profile />} />
-            <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/product/:id" element={<RequireAuth><ProductDetail /></RequireAuth>} />
+            <Route path="/profile/:id" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route path="/add-product" element={<RequireAuth><AddProduct /></RequireAuth>} />
             <Route path="/search" element={<Search />} />
-            <Route path="/checkout/:id" element={<Checkout />} />
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/logs" element={<AdminLogs />} />
-            <Route path="/admin/ping" element={<AdminPing />} />
-            <Route path="/admin/export" element={<AdminExport />} />
+            <Route path="/checkout/:id" element={<RequireAuth><Checkout /></RequireAuth>} />
+            <Route path="/wallet" element={<RequireAuth><Wallet /></RequireAuth>} />
+            <Route path="/orders" element={<RequireAuth><Orders /></RequireAuth>} />
+            <Route path="/admin" element={<RequireAuth><AdminDashboard /></RequireAuth>} />
+            <Route path="/admin/users" element={<RequireAuth><AdminUsers /></RequireAuth>} />
+            <Route path="/admin/logs" element={<RequireAuth><AdminLogs /></RequireAuth>} />
+            <Route path="/admin/ping" element={<RequireAuth><AdminPing /></RequireAuth>} />
+            <Route path="/admin/export" element={<RequireAuth><AdminExport /></RequireAuth>} />
           </Routes>
         </main>
       )}

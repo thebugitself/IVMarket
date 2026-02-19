@@ -1,18 +1,14 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - Credentials sent over HTTP (no TLS enforced)
- * - "Remember Me" sets a forgeable Base64 cookie
- * - No CSRF token
- * - Error messages may leak DB info (SQLi feedback)
- */
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const redirectUrl = searchParams.get('redirect');
 
   const [form, setForm] = useState({ username: '', password: '', remember: false });
   const [error, setError] = useState('');
@@ -33,10 +29,14 @@ export default function Login() {
 
       if (data.success) {
         login(data.token, data.user);
-        navigate('/');
+
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
-      // VULN: Raw backend error shown to user (may contain SQL details)
       setError(err.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);

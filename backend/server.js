@@ -690,6 +690,33 @@ app.post('/api/debug', (req, res) => {
   }
 });
 
+// ── Open Redirect + Reflected XSS ──────────────────────────
+// VULN: No URL validation — redirects to any URL including javascript: URIs
+//       HTML response reflects the 'url' parameter without sanitisation → XSS
+app.get('/api/redirect', (req, res) => {
+  const url = req.query.url || '/';
+
+  // If client accepts HTML, render a redirect page that reflects the URL (XSS)
+  if (req.headers.accept && req.headers.accept.includes('text/html')) {
+    return res.type('html').send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Redirecting...</title></head>
+      <body style="font-family:sans-serif;text-align:center;padding:60px">
+        <h2>🔄 Redirecting...</h2>
+        <p>You are being redirected to:</p>
+        <p><a href="${url}">${url}</a></p>
+        <p style="color:#999;font-size:0.8em">If you are not redirected automatically, click the link above.</p>
+        <script>setTimeout(function(){ window.location = "${url}"; }, 2000);</script>
+      </body>
+      </html>
+    `);
+  }
+
+  // API/JSON clients get a 302 redirect
+  res.redirect(url);
+});
+
 app.get('/api/health', async (_req, res) => {
   try {
     await db.query('SELECT 1');
@@ -718,6 +745,7 @@ app.get('/api/robots.txt', (_req, res) => {
     'Disallow: /api/users/export',
     'Disallow: /api/internal/metadata',
     'Disallow: /api/password-reset',
+    'Disallow: /api/redirect',
   ].join('\n'));
 });
 

