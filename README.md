@@ -84,21 +84,6 @@ docker compose up --build
 
 ---
 
-## 🔥 OWASP Top 10 Coverage
-
-| OWASP Category | Vulnerabilities Found |
-|----------------|----------------------|
-| **A01** Broken Access Control | IDOR, Missing Auth, Path Traversal, User Data Export |
-| **A02** Cryptographic Failures | MD5 passwords, JWT weak secret, Base64 cookies |
-| **A03** Injection | SQL Injection, XSS (Reflected + Stored), Command Injection, SSTI, RCE (eval) |
-| **A04** Insecure Design | Mass Assignment, Price Tampering, Race Condition, Unrestricted Upload, No Email Verification |
-| **A05** Security Misconfiguration | Debug endpoints, CORS wildcard, Verbose errors, Exposed config/secrets, robots.txt leaks |
-| **A06** Vulnerable Components | (Check dependencies for known CVEs) |
-| **A07** Auth Failures | Weak JWT, Algorithm confusion (none), Cookie forgery, No brute-force protection |
-| **A08** Data Integrity Failures | No input validation, Client-side only auth for admin |
-| **A09** Logging Failures | Sensitive data in logs, No audit trail |
-| **A10** SSRF | Unrestricted URL fetch, Internal service access |
-
 See [vulnerabilities.md](vulnerabilities.md) for full details and [cheat-sheet.txt](cheat-sheet.txt) for exploit guidance.
 
 ---
