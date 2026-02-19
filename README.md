@@ -1,12 +1,12 @@
-# 🔐 IVM — ID-Networkers Vulnerable Marketplace
+# IVM — ID-Networkers Vulnerable Marketplace
 
-> **⚠️  THIS APPLICATION IS INTENTIONALLY INSECURE.**
+> **THIS APPLICATION IS INTENTIONALLY INSECURE.**
 > **For security training and penetration testing labs ONLY.**
 > **Do NOT deploy in production or on public networks.**
 
 ---
 
-## 🎯 Tujuan Lab
+## Tujuan Lab
 
 Lab ini dirancang untuk **memahami kerentanan web application** berdasarkan **OWASP Top 10**.
 Fokus utama bukan pada mencari flag, melainkan:
@@ -18,7 +18,7 @@ Fokus utama bukan pada mencari flag, melainkan:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 docker compose up --build
@@ -42,7 +42,7 @@ docker compose up --build
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── docker-compose.yml        # All services
@@ -88,6 +88,6 @@ See [vulnerabilities.md](vulnerabilities.md) for full details and [cheat-sheet.t
 
 ---
 
-## 📜 License
+## License
 
 This project is provided as-is for educational purposes only. Use responsibly.
