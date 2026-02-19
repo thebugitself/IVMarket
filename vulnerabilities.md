@@ -18,7 +18,7 @@
 
 ## Vulnerability Matrix
 
-### 1. SQL Injection — `OWASP A03:2021 Injection`
+### 1. SQL Injection
 
 | Property | Value |
 |----------|-------|
@@ -47,7 +47,7 @@
 
 ---
 
-### 2. Reflected XSS — `OWASP A03:2021 Injection`
+### 2. Reflected XSS
 
 | Property | Value |
 |----------|-------|
@@ -68,7 +68,7 @@
 
 ---
 
-### 3. Stored XSS — `OWASP A03:2021 Injection`
+### 3. Stored XSS
 
 | Property | Value |
 |----------|-------|
@@ -88,7 +88,7 @@
 
 ---
 
-### 4. Broken Authentication — `OWASP A07:2021`
+### 4. Broken Authentication
 
 | Property | Value |
 |----------|-------|
@@ -128,7 +128,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 5. IDOR / BOLA — `OWASP A01:2021 Broken Access Control`
+### 5. IDOR / BOLA
 
 | Property | Value |
 |----------|-------|
@@ -149,7 +149,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 6. Mass Assignment — `OWASP A04:2021 Insecure Design`
+### 6. Mass Assignment
 
 | Property | Value |
 |----------|-------|
@@ -169,7 +169,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 7. Unrestricted File Upload — `OWASP A04:2021`
+### 7. Unrestricted File Upload
 
 | Property | Value |
 |----------|-------|
@@ -191,7 +191,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 8. Price Tampering — `OWASP A04:2021`
+### 8. Price Tampering
 
 | Property | Value |
 |----------|-------|
@@ -211,7 +211,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 9. Path Traversal / LFI — `OWASP A01:2021`
+### 9. Path Traversal / LFI
 
 | Property | Value |
 |----------|-------|
@@ -231,7 +231,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 10. OS Command Injection — `OWASP A03:2021`
+### 10. OS Command Injection
 
 | Property | Value |
 |----------|-------|
@@ -251,7 +251,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 11. SSRF — `OWASP A10:2021`
+### 11. SSRF
 
 | Property | Value |
 |----------|-------|
@@ -271,7 +271,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 12. Race Condition (Wallet Withdraw) — `OWASP A04:2021`
+### 12. Race Condition (Wallet Withdraw)
 
 | Property | Value |
 |----------|-------|
@@ -291,7 +291,7 @@ echo '{"id":1,"username":"admin","role":"admin"}' | base64
 
 ---
 
-### 12b. Race Condition (Discount Code Stacking) — `OWASP A04:2021`
+### 12b. Race Condition (Discount Code Stacking)
 
 | Property | Value |
 |----------|-------|
@@ -326,7 +326,7 @@ wait
 
 ---
 
-### 13. RCE via eval() — `OWASP A03:2021`
+### 13. RCE via eval()
 
 | Property | Value |
 |----------|-------|
@@ -346,7 +346,7 @@ wait
 
 ---
 
-### 14. Server-Side Template Injection (SSTI) — `OWASP A03:2021`
+### 14. Server-Side Template Injection (SSTI)
 
 | Property | Value |
 |----------|-------|
@@ -365,7 +365,7 @@ wait
 
 ---
 
-### 15. Insecure Password Reset — `OWASP A04:2021`
+### 15. Insecure Password Reset
 
 | Property | Value |
 |----------|-------|
@@ -385,7 +385,7 @@ wait
 
 ---
 
-### 16. Security Misconfiguration — `OWASP A05:2021`
+### 16. Security Misconfiguration
 
 | Property | Value |
 |----------|-------|
@@ -407,7 +407,7 @@ wait
 
 ---
 
-### 17. Broken Access Control — User Data Export — `OWASP A01:2021`
+### 17. Broken Access Control — User Data Export
 
 | Property | Value |
 |----------|-------|
@@ -425,7 +425,7 @@ wait
 
 ---
 
-### 18. Client-Side Security Controls — `OWASP A04:2021`
+### 18. Client-Side Security Controls
 
 | Property | Value |
 |----------|-------|
@@ -443,7 +443,7 @@ wait
 
 ---
 
-### 19. Open Redirect + Reflected XSS — `OWASP A01:2021` / `OWASP A03:2021`
+### 19. Open Redirect + Reflected XSS
 
 | Property | Value |
 |----------|-------|
