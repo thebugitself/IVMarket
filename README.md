@@ -22,8 +22,13 @@ Fokus utama bukan pada mencari flag, melainkan:
 ```bash
 git clone https://github.com/thebugitself/IVMarket.git
 ```
+Start lab:
 ```bash
 docker compose up --build
+```
+Stop Lab:
+```bash
+docker compose down -v
 ```
 
 | Service   | URL                          | Credentials           |
