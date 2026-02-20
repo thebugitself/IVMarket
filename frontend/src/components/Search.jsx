@@ -2,13 +2,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - Reflected XSS: The backend echoes the raw search term, and this component
- *   renders it via dangerouslySetInnerHTML.
- *   Example payload in URL: /search?q=<img src=x onerror=alert(1)>
- * - SQL Injection: The search term is concatenated into a LIKE query.
- */
 export default function Search() {
   const [params] = useSearchParams();
   const query = params.get('q') || '';
@@ -23,10 +16,9 @@ export default function Search() {
     axios.get(`/api/search?q=${encodeURIComponent(query)}`)
       .then(({ data }) => {
         setResults(data.results || []);
-        setRawQuery(data.query || query); // raw, unsanitised
+        setRawQuery(data.query || query); 
       })
       .catch((err) => {
-        // VULN: Still render raw query on error – reflected XSS fires even on SQL error
         setRawQuery(err.response?.data?.query || query);
         setResults([]);
       })
@@ -41,10 +33,7 @@ export default function Search() {
         <h1>Search Results</h1>
       </div>
 
-      {/*
-        VULN: Reflected XSS – rawQuery comes directly from the server response
-        which is the unsanitised user input echoed back.
-      */}
+      { }
       <div className="search-info">
         <span>Showing results for: </span>
         <strong dangerouslySetInnerHTML={{ __html: rawQuery }} />

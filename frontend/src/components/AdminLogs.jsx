@@ -2,14 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - Path Traversal / LFI:  The "f" parameter is passed to fs.readFileSync
- *   on the server with NO sanitisation.
- *   Try: ../../../../etc/passwd
- *   Try: /etc/shadow  (absolute path)
- *   Try: ../../../../proc/self/environ
- */
 export default function AdminLogs() {
   const { token } = useAuth();
 
@@ -64,7 +56,7 @@ export default function AdminLogs() {
         </button>
       </form>
 
-      {/* Quick-access buttons */}
+      { }
       <div className="flex gap-1 mb-3" style={{ flexWrap: 'wrap' }}>
         {[
           'app.log',

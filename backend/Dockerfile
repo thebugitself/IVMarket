@@ -9,7 +9,6 @@ COPY . .
 
 RUN mkdir -p uploads logs
 
-# Sensitive files for path traversal / LFI discovery
 RUN echo 'DB_PASSWORD=rootpassword' > /app/.env
 RUN echo 'JWT_SECRET=secret123' >> /app/.env
 RUN echo 'ADMIN_API_KEY=sk-live-4f3c2b1a-9e8d-7f6g-5h4i-3j2k1l0m9n8o' >> /app/.env

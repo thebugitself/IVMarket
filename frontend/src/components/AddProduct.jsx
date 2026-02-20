@@ -23,7 +23,7 @@ export default function AddProduct() {
     setUploading(true);
 
     const fd = new FormData();
-    fd.append('file', file); // VULN: No type validation
+    fd.append('file', file);
 
     try {
       const { data } = await axios.post('/api/upload', fd);

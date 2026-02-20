@@ -2,11 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - No server-side role check → any authed user can list/delete users.
- * - DELETE uses predictable numeric IDs.
- */
 export default function AdminUsers() {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);

@@ -43,7 +43,7 @@ export default function Marketplace() {
         <p>Browse and purchase items from our community</p>
       </div>
 
-      {/* Category filter */}
+      { }
       <div className="flex gap-1 mb-3" style={{ flexWrap: 'wrap' }}>
         {CATEGORIES.map((cat) => (
           <button

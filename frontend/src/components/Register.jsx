@@ -2,12 +2,6 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - No client-side or server-side input validation
- * - SQL Injection possible via username/email fields
- * - Password stored as unsalted MD5
- */
 export default function Register() {
   const navigate = useNavigate();
 

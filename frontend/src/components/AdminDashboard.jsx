@@ -9,9 +9,6 @@ export default function AdminDashboard() {
       <div className="empty-state">
         <h2>⛔ Access Denied</h2>
         <p>You do not have permission to view this page.</p>
-        <p className="text-muted mt-2" style={{ fontSize: '0.8rem' }}>
-          Hint: What if you could change your role via the profile update endpoint? 😉
-        </p>
       </div>
     );
   }
@@ -26,11 +23,10 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="page-header">
-        <h1>⚡ Admin Dashboard</h1>
+        <h1>Admin Dashboard</h1>
         <p>System administration and power tools</p>
       </div>
 
-      {/* Active Promotions */}
       <div style={{
         background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
         border: '1px solid #fed7aa',

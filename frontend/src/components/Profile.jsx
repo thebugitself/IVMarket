@@ -3,14 +3,6 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - IDOR / BOLA: Changing :id in the URL exposes any user's PII.
- * - Mass Assignment: The update form sends ALL fields (including "role") to the backend.
- * - Client-Side Logic Bypass: The "role" field is hidden unless you're admin,
- *   but you can always send it in the request body via DevTools or curl.
- * - Unrestricted File Upload: Avatar upload has no type/size validation.
- */
 export default function Profile() {
   const { id } = useParams();
   const { user, token, setUser } = useAuth();
@@ -25,7 +17,6 @@ export default function Profile() {
   const isOwn = user && String(user.id) === String(id);
 
   useEffect(() => {
-    // VULN: No auth required – anyone can fetch any user's profile by ID
     axios.get(`/api/user/${id}`)
       .then(({ data }) => {
         setProfile(data);
@@ -44,9 +35,8 @@ export default function Profile() {
     setError('');
 
     try {
-      // VULN: Mass Assignment – role field included in body
       const { data } = await axios.put('/api/user/update', {
-        id,           // VULN: IDOR – id from URL, not token
+        id,           
         ...form,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -55,7 +45,6 @@ export default function Profile() {
         setMsg('Profile updated!');
         setEditing(false);
 
-        // Update local context if own profile
         if (isOwn && data.user) {
           setUser((prev) => ({ ...prev, ...data.user }));
         }
@@ -71,7 +60,7 @@ export default function Profile() {
 
     setUploading(true);
     const fd = new FormData();
-    fd.append('file', file); // VULN: No client-side type validation
+    fd.append('file', file); 
 
     try {
       const { data } = await axios.post('/api/upload', fd);
@@ -91,7 +80,7 @@ export default function Profile() {
 
   return (
     <div className="profile-container">
-      {/* ── Header ─────────────────────────────────── */}
+      { }
       <div className="profile-header">
         <div className="profile-avatar">
           {profile.avatar && profile.avatar !== '/uploads/default-avatar.png' ? (
@@ -117,7 +106,7 @@ export default function Profile() {
       {msg && <div className="alert alert-success">{msg}</div>}
       {error && <div className="alert alert-error">{error}</div>}
 
-      {/* ── Profile Details / Edit Form ─────────────── */}
+      { }
       <div className="form-container" style={{ maxWidth: '100%' }}>
         {!editing ? (
           <div>
@@ -138,7 +127,7 @@ export default function Profile() {
               </button>
             )}
 
-            {/* Show JWT token for authenticated testing (Bearer token for curl) */}
+            { }
             {isOwn && token && (
               <div style={{ marginTop: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>🔑 Session Token</h3>
@@ -180,13 +169,13 @@ export default function Profile() {
               <textarea name="bio" value={form.bio || ''} onChange={handleChange} rows={3} />
             </div>
 
-            {/* VULN: Role field visible in the form – Mass Assignment */}
+            { }
             <div className="form-group">
               <label>Role</label>
               <input name="role" value={form.role || ''} onChange={handleChange} />
             </div>
 
-            {/* VULN: Unrestricted File Upload */}
+            { }
             <div className="form-group">
               <label>Avatar (upload any file…)</label>
               <input type="file" onChange={handleAvatarUpload} />

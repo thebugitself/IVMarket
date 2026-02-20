@@ -1,10 +1,4 @@
-# ============================================================
-# IVM - ID-NETWORKERS VULNERABLE MARKETPLACE
-# Docker Compose - FOR SECURITY TRAINING ONLY
-# ============================================================
-
 services:
-  # ---- MySQL Database ----
   db:
     image: mysql:8.0
     environment:
@@ -22,14 +16,11 @@ services:
       retries: 20
       start_period: 30s
 
-  # ---- Redis (Insecure Session Store) ----
   redis:
     image: redis:7-alpine
-    # VULN: No password, no ACL - anyone on the network can connect
     ports:
       - "6379:6379"
 
-  # ---- Node.js Backend API ----
   backend:
     build: ./backend
     ports:
@@ -48,7 +39,6 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
 
-  # ---- React Frontend (Nginx) ----
   frontend:
     build: ./frontend
     ports:

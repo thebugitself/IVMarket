@@ -84,8 +84,6 @@ function verifyToken(req, res, next) {
     } catch (_) { }
   }
 
-  // VULN: Auth via session_token cookie — sent automatically by browser on cross-site
-  // requests → CSRF. Combined with SameSite=None + no CSRF token = exploitable.
   const sessionToken = req.cookies?.session_token;
   if (sessionToken) {
     try {
@@ -157,7 +155,6 @@ app.post('/api/login', async (req, res) => {
       const user  = rows[0];
       const token = generateToken(user);
 
-      // VULN: SameSite=None sends cookie on cross-site requests → CSRF
       res.cookie('session_token', token, {
         httpOnly: false,  
         secure: false,    
@@ -199,10 +196,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ── CSRF-Vulnerable Profile Update ──────────────────────────
-// VULN: No CSRF token, accepts GET & form-encoded POST, authenticates via cookie.
-//       An attacker page can submit a hidden form or <img> tag to change the
-//       victim's email/password/role without their knowledge.
 app.get('/api/user/profile-update', verifyToken, async (req, res) => {
   try {
     const userId = req.query.id || req.user.id;
@@ -220,7 +213,6 @@ app.get('/api/user/profile-update', verifyToken, async (req, res) => {
 
     await db.query(`INSERT INTO logs (action, details, ip_address) VALUES ('profile_update_csrf', 'Profile updated via GET for user ${userId}', '${req.ip}')`);
 
-    // Return HTML so it works when loaded as <img> or in browser
     if (req.headers.accept && req.headers.accept.includes('text/html')) {
       return res.type('html').send(`<html><body><h2>Profile Updated!</h2><p>User ${updated[0].username} has been updated.</p><script>setTimeout(function(){ window.close(); }, 1500);</script></body></html>`);
     }
@@ -350,12 +342,6 @@ app.get('/api/reviews/:productId', async (req, res) => {
   }
 });
 
-// ── Discount Code ──────────────────────────────────────────
-// VULN: Race condition — check-then-insert without transaction lock.
-//       Multiple parallel requests can all pass the "already used" check
-//       before any INSERT happens, allowing the discount to stack.
-
-// Check existing discount usages for a user + product
 app.get('/api/discount/check/:productId', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -383,7 +369,6 @@ app.post('/api/discount/apply', verifyToken, async (req, res) => {
     const { code, product_id } = req.body;
     const userId = req.user.id;
 
-    // Only "IDN20" is valid — 20% off
     const validCodes = { 'IDN20': 20 };
     if (!validCodes[code]) {
       return res.status(400).json({ error: 'Invalid discount code' });
@@ -391,7 +376,6 @@ app.post('/api/discount/apply', verifyToken, async (req, res) => {
 
     const discountPercent = validCodes[code];
 
-    // Step 1: Check if user already used this code for this product (SELECT)
     const [existing] = await db.query(
       `SELECT * FROM discount_usages WHERE user_id = ${userId} AND discount_code = '${code}' AND product_id = ${product_id}`
     );
@@ -400,16 +384,12 @@ app.post('/api/discount/apply', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Discount code already applied to this product' });
     }
 
-    // VULNERABLE: Artificial delay between CHECK and INSERT
-    // This window allows race condition exploitation
     await new Promise(r => setTimeout(r, 500));
 
-    // Step 2: Record usage (too late if multiple requests passed Step 1)
     await db.query(
       `INSERT INTO discount_usages (user_id, discount_code, product_id, discount_percent) VALUES (${userId}, '${code}', ${product_id}, ${discountPercent})`
     );
 
-    // Count how many times discount was applied (for stacking detection)
     const [usages] = await db.query(
       `SELECT COUNT(*) as count FROM discount_usages WHERE user_id = ${userId} AND discount_code = '${code}' AND product_id = ${product_id}`
     );
@@ -430,7 +410,6 @@ app.post('/api/discount/apply', verifyToken, async (req, res) => {
   }
 });
 
-// Reset discount usages (for re-testing)
 app.delete('/api/discount/reset', verifyToken, async (req, res) => {
   try {
     const { product_id } = req.body;
@@ -445,7 +424,6 @@ app.post('/api/order', verifyToken, async (req, res) => {
   try {
     const { product_id, quantity, total_price, shipping_address, discount_code } = req.body;
 
-    // Check wallet balance before placing order
     const [wallet] = await db.query(`SELECT balance FROM wallets WHERE user_id = ${req.user.id}`);
     if (!wallet.length) return res.status(400).json({ error: 'Wallet not found' });
     const balance = parseFloat(wallet[0].balance);
@@ -459,7 +437,6 @@ app.post('/api/order', verifyToken, async (req, res) => {
 
     await db.query(`UPDATE wallets SET balance = GREATEST(balance - ${total_price}, 0) WHERE user_id = ${req.user.id}`);
 
-    // Clean up discount usages for this product after order
     if (discount_code) {
       await db.query(`INSERT INTO logs (action, details, ip_address) VALUES ('discount_used', 'Order #${result.insertId} used discount ${discount_code}', '${req.ip}')`);
     }
@@ -736,20 +713,16 @@ app.post('/api/export-pdf', verifyToken, async (req, res) => {
 app.post('/api/debug', (req, res) => {
   try {
     const { code } = req.body;
-    const result = eval(code); // VULN: arbitrary JS execution
+    const result = eval(code);
     res.json({ success: true, input: code, output: String(result) });
   } catch (err) {
     res.json({ success: false, input: req.body.code, error: err.message });
   }
 });
 
-// ── Open Redirect + Reflected XSS ──────────────────────────
-// VULN: No URL validation — redirects to any URL including javascript: URIs
-//       HTML response reflects the 'url' parameter without sanitisation → XSS
 app.get('/api/redirect', (req, res) => {
   const url = req.query.url || '/';
 
-  // If client accepts HTML, render a redirect page that reflects the URL (XSS)
   if (req.headers.accept && req.headers.accept.includes('text/html')) {
     return res.type('html').send(`
       <!DOCTYPE html>
@@ -766,7 +739,6 @@ app.get('/api/redirect', (req, res) => {
     `);
   }
 
-  // API/JSON clients get a 302 redirect
   res.redirect(url);
 });
 

@@ -15,10 +15,8 @@ export default function Checkout() {
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
-  // Wallet
   const [walletBalance, setWalletBalance] = useState(0);
 
-  // Discount
   const [discountCode, setDiscountCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountApplied, setDiscountApplied] = useState(false);
@@ -37,7 +35,6 @@ export default function Checkout() {
         setProduct(prodRes.data);
         if (walletRes) setWalletBalance(parseFloat(walletRes.data.balance) || 0);
         if (userRes) setAddress(userRes.data.address || '');
-        // Restore discount state from DB
         if (discountRes?.data?.applied) {
           const d = discountRes.data;
           setDiscountCode(d.code);
@@ -73,7 +70,6 @@ export default function Checkout() {
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       if (data.success) {
-        // Fetch actual total from DB to reflect stacked discounts accurately
         const { data: check } = await axios.get(`/api/discount/check/${product.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -145,7 +141,6 @@ export default function Checkout() {
       {msg && <div className="alert alert-success">{msg}</div>}
       {error && <div className="alert alert-error">{error}</div>}
 
-      {/* Wallet Balance */}
       <div style={{
         background: insufficientBalance ? '#fff3f3' : '#f0fdf4',
         border: `1px solid ${insufficientBalance ? '#fca5a5' : '#bbf7d0'}`,
@@ -194,7 +189,6 @@ export default function Checkout() {
           <span>${subtotal.toFixed(2)}</span>
         </div>
 
-        {/* Discount Code Section */}
         <div style={{
           background: '#f8f9fa',
           border: '1px solid #e0e0e0',
